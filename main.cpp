@@ -44,7 +44,7 @@ int main(int argc, char *args[])
 }
 
 /*构造抽象语法树,变长参数，name:语法单元名字；num:变长参数中语法结点个数*/
-struct Ast *AstCreator(char *name, int num, ...)
+struct Ast *newast(char *name, int num, ...)
 {
   va_list valist;                   // 定义变长参数列表
   struct Ast *a = new (struct Ast); // 新生成的父节点

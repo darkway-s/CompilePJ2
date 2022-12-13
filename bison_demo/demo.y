@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-#include "lex.c"
+#include "lexer.c"
 void yyerror(const char* msg) {
   cerr << msg << endl;
 }

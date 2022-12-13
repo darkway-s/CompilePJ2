@@ -6,7 +6,7 @@ parser: main.cpp yacc.o
 			$(GCC) main.cpp yacc.o -o parser
 
 yacc.o: yacc.c
-			$(GCC) -c yacc.c
+			$(GCC) -c yacc.c -w
 
 yacc.c: parser.y lexer.c
 			$(YACC) -o yacc.c -d parser.y

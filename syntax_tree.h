@@ -4,8 +4,7 @@
 #include <string>
 
 /*来自于词法分析器*/
-extern int yylineno;        // 行号
-extern char *yytext;        // 词
+extern "C" int yylineno;        // 行号
 void yyerror(char *s, ...); // 错误处理函数
 
 /*抽象语法树的结点*/
@@ -24,7 +23,7 @@ struct Ast
 };
 
 /*构造抽象语法树,变长参数，name:语法单元名字；num:变长参数中语法结点个数*/
-struct Ast *AstCreator(char *name, int num, ...);
+struct Ast *newast(char *name, int num, ...);
 
 /*遍历抽象语法树，level为树的层数*/
 void eval(struct Ast *, int level);
