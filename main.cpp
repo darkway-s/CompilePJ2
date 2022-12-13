@@ -1,24 +1,23 @@
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h> //变长参数函数所需的头文件
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdarg> //变长参数函数所需的头文件
 #include "yacc.h"
 #include "syntax_tree.h"
-using namespace std;
 
 int yylex();
 int yyparse();
 extern "C" FILE *yyin;
 FILE *fp = stdin;
 
-extern int tokens_num;
-extern int lcol;
-extern int rows;
-extern char *yytext;
-extern int yyleng;
+extern "C" int tokens_num;
+extern "C" int lcol;
+extern "C" int rows;
+extern "C" char *yytext;
+extern "C" int yyleng;
 
-struct ast* ast_root;
+extern "C" struct Ast *ast_root;
 int flag = 0;
 int i;
 
@@ -29,7 +28,7 @@ int main(int argc, char *args[])
     FILE *file = fopen(args[1], "r");
     if (!file)
     {
-      cerr << "Can not open file." << endl;
+      std::cerr << "Can not open file." << std::endl;
       return 1;
     }
     else
@@ -38,7 +37,6 @@ int main(int argc, char *args[])
     }
   }
 
-
   yyparse();
 
   deleteAst(ast_root);
@@ -46,14 +44,14 @@ int main(int argc, char *args[])
 }
 
 /*构造抽象语法树,变长参数，name:语法单元名字；num:变长参数中语法结点个数*/
-struct ast *newast(char *name, int num, ...)
+struct Ast *AstCreator(char *name, int num, ...)
 {
   va_list valist;                   // 定义变长参数列表
-  struct ast *a = new (struct ast); // 新生成的父节点
-  struct ast *child;
+  struct Ast *a = new (struct Ast); // 新生成的父节点
+  struct Ast *child;
   if (!a)
   {
-    yyerror("out of space");
+    yyerror((char *)"out of space");
     exit(0);
   }
   a->name = name;        // 语法单元名字
@@ -62,13 +60,13 @@ struct ast *newast(char *name, int num, ...)
   if (num > 0) // num>0为非终结符：变长参数均为语法树结点
   {
     // 先取得第一个参数
-    child = va_arg(valist, struct ast *);
+    child = va_arg(valist, struct Ast *);
     a->children.push_back(child);
     a->line = child->line; // 父节点a的行号等于第一个孩子的行号
 
     for (int i = 1; i < num; i++)
     {
-      child = va_arg(valist, struct ast *); // 取参数
+      child = va_arg(valist, struct Ast *); // 取参数
       a->children.push_back(child);
     }
   }
@@ -98,7 +96,7 @@ struct ast *newast(char *name, int num, ...)
 }
 
 /*遍历抽象语法树，level为树的层数*/
-void eval(struct ast *a, int level)
+void eval(struct Ast *a, int level)
 {
   if (a != NULL)
   {
@@ -120,14 +118,14 @@ void eval(struct ast *a, int level)
     fprintf(fp, "\n");
 
     // DFS
-    for (std::vector<ast *>::iterator iter = a->children.begin(); iter != a->children.end(); iter++)
+    for (std::vector<Ast *>::iterator iter = a->children.begin(); iter != a->children.end(); iter++)
     {
       eval((*iter), level + 1);
     }
   }
 }
 
-void evalformat(struct ast *a, int level)
+void evalformat(struct Ast *a, int level)
 {
   if (flag == 0)
   {
@@ -153,9 +151,9 @@ void yyerror(char *s, ...) // 变长参数错误处理函数
   fprintf(fp, "\n");
 }
 
-void deleteAst(struct ast *a) // 回收内存~
+void deleteAst(struct Ast *a) // 回收内存~
 {
-  for (std::vector<ast *>::iterator iter = a->children.begin(); iter != a->children.end(); iter++)
+  for (std::vector<Ast *>::iterator iter = a->children.begin(); iter != a->children.end(); iter++)
   {
     deleteAst((*iter));
   }

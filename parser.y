@@ -4,6 +4,8 @@
 # include "lex.c"
 using namespace std;
 
+struct Ast *ast_root = NULL;
+
 void yyerror(const char* msg) {
   cerr << msg << endl;
 }
