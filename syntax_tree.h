@@ -7,6 +7,15 @@
 extern "C" int yylineno;        // 行号
 void yyerror(char *s, ...); // 错误处理函数
 
+
+#define RESERVED 4
+#define OPERATOR 9
+#define DELIMITER 10
+#define UTSTRING 12
+#define BADCHAR 13
+#define UNKNOWN 100
+
+
 /*抽象语法树的结点*/
 struct Ast
 {

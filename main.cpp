@@ -10,6 +10,7 @@ int yylex();
 int yyparse();
 extern "C" FILE *yyin;
 FILE *fp = stdin;
+char* filename;
 
 extern "C" int tokens_num;
 extern "C" int lcol;
@@ -23,21 +24,27 @@ int i;
 
 int main(int argc, char *args[])
 {
-  if (argc > 1)
-  {
+  if (argc > 1) {
     FILE *file = fopen(args[1], "r");
-    if (!file)
-    {
-      std::cerr << "Can not open file." << std::endl;
-      return 1;
+    if (argc > 2) {
+        filename = args[2];
+    }else {
+        printf("Please designate the name of the outfile!\n");
+        return 1;
     }
-    else
-    {
+    if (!file) {
+      printf("can not open file");
+      return 1;
+    } else {
       yyin = file;
     }
   }
 
+  fp = fopen(filename,"w+");
+  
   yyparse();
+  
+  fclose(fp);
 
   deleteAst(ast_root);
   return 0;

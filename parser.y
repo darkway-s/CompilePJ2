@@ -20,7 +20,6 @@ double d;
 %token <a> EOL
 %token <a> T_EOF
 %token <a> C_EOF
-%token <a> UTSTRING BADCHAR
 
 %type <a> body
 %type <a> declaration
