@@ -1,0 +1,7 @@
+.vscode/settings.json
+
+*.o
+yacc.c
+yacc.h
+lexer.c
+parser
