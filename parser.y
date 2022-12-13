@@ -1,8 +1,9 @@
 %{
-#include <iostream>
+# include <iostream>
+# include "syntax_tree.h"
+# include "lex.c"
 using namespace std;
 
-#include "lex.c"
 void yyerror(const char* msg) {
   cerr << msg << endl;
 }
