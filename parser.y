@@ -1,224 +1,188 @@
 %{
-#include<unistd.h>
-#include<stdio.h>   
-#include "syntax_tree.h"
-#include "lexer.c"
+# include <iostream>
+# include "syntax_tree.h"
+# include "lexer.c"
+using namespace std;
 
 struct Ast *ast_root = NULL;
+
+void yyerror(const char* msg) {
+  cerr << msg << endl;
+}
 %}
 
-%union{
-struct Ast* a;
-double d;
+%union {
+  struct Ast* node;
+  double val;
 }
-%token <a> INTEGER FLOAT STRING
-%token <a> PROGRAM IS BEGIN_1 VAR END WRITE SEMI COLON COMMA ASSIGNOP Lbracket Rbracket ID TYPE ADD MINUS STAR DIVISON REAL DO BY ARRAY AND ELSE ELSEIF DIV READ TYPENAME
-%token <a> LSbracket RSbracket SPOT OF PROCEDURE
-%token <a> NOT MOD OR RECORD
-%token <a> BIGGER SMALLER EQUAL NSMALLER NBIGGER SQUARE Llimit Rlimit LHbracket RHbracket
-%token <a> RETURN EXIT FOR LOOP WHILE IF THEN TO
-%token <a> EOL
-%token <a> T_EOF
-%token <a> C_EOF
 
-%type <a> body
-%type <a> declaration
-%type <a> var-decl
-%type <a> var-decl2
-%type <a> statement
-%type <a> ID-closure
-%type <a> write-params
-%type <a> write-expr
-%type <a> write-expr-closure
-%type <a> unary-op
-%type <a> binary-op
-%type <a> expression
-%type <a> lvalue
-%type <a> lvalue-closure
-%type <a> type-decl
-%type <a> type-decl-closure
-%type <a> type
-%type <a> component
-%type <a> component-closure
-%type <a> procedure-decl
-%type <a> procedure-decl2
-%type <a> procedure-decl-closure
-%type <a> formal-params
-%type <a> fp-section
-%type <a> fp-section-closure
-%type <a> actual-params
-%type <a> expression-closure
-%type <a> array-value
-%type <a> array2
-%type <a> array-values
-%type <a> array-closure
-%type <a> comp-values
-%type <a> comp-closure
-%type <a> expression2
-%type <a> statement-closure
-%type <a> by-expression
-
-%type <a> root
+%left <node> SEMI COLON COMMA SPOT ASSIGNOP
+%left <node> BIGGER SMALLER EQUAL NSMALLER NBIGGER SQUARE
+%left <node> OR
+%left <node> AND
+%left <node> ADD MINUS
+%left <node> STAR DIVISON DIV MOD
+%left <node> NOT
+%left <node> UNARYOP /* 用来区分并给出一元运算符的优先级*/
 
 
+%token <node> INTEGER REAL STRING
+%token <node> PROGRAM IS MY_BEGIN VAR END WRITE 
+%token <node> Lbracket Rbracket ID TYPE
+%token <node> DO BY ARRAY ELSE ELSIF READ
+%token <node> LSbracket RSbracket OF PROCEDURE
+%token <node> RECORD
+%token <node> Llimit Rlimit LCbracket RCbracket
+%token <node> RETURN EXIT FOR LOOP WHILE IF THEN TO
+%token <node> EOL T_EOF C_EOF
+
+%type <node> program body declaration var-decl
+%type <node> type-decl procedure-decl type component
+%type <node> formal-params statement
+%type <node> fp-section write-params write-expr
+%type <node> expression lvalue actual-params comp-values
+%type <node> array-values array-value number unary-op
+%type <node> binary-op
+%type <node> declaration_list statement_list
+%type <node> var-decl_list type-decl_list procedure-decl_list
+%type <node> COMMA_ID_list COLON_type_option
+%type <node> component_list SEMI_fp-section_list
+%type <node> COMMA_lvalue_list ELSIF_statement_list_list
+%type <node> ELSE_statement_list_option BY_expression_option expression_option
+%type <node> COMMA_expression_list COMMA_write-expr_list
+%type <node> tmp_list_1
+%type <node> COMMA_array-value_list
+
+
+/*出现xxx_list/option会多写一个它的定义,其余按照PCAT语言参考指南的顺序*/
 %%
- root: {$$=newast((char*)"root",0,-1); ast_root = $$;}
-  | PROGRAM IS body SEMI{$$=newast((char*)"root",4,$1,$2,$3,$4);ast_root = $$;evalformat($$,0);}
+program: {$$=newast("program", 0, -1);} /*没匹配到则默认创建的节点*/
+  | PROGRAM IS body SEMI{$$=newast("program", 4, $1, $2, $3, $4); evalformat($$, 0);}
   ;
-
-body: {$$=newast((char*)"body",0,-1);}
-  | declaration BEGIN_1 statement END {$$=newast((char*)"body",4,$1,$2,$3,$4);}
+body: {$$=newast("body", 0, -1);}
+  | declaration_list MY_BEGIN statement_list END{$$=newast("body", 4, $1, $2, $3, $4);}
   ;
-
-declaration: {$$=newast((char*)"declaration",0,-1);}
-  | VAR var-decl SEMI declaration {$$=newast((char*)"declaration",4,$1,$2,$3,$4);}
-  | var-decl SEMI declaration {$$=newast((char*)"declaration",3,$1,$2,$3);}
-  | TYPE type-decl type-decl-closure declaration {$$=newast((char*)"declaration",4,$1,$2,$3,$4);}
-  | PROCEDURE procedure-decl procedure-decl-closure declaration {$$=newast((char*)"declaration",4,$1,$2,$3,$4);}
+declaration_list: {$$=newast("declaration_list",0,-1);}
+  | declaration declaration_list {$$=newast("declaration_list", 2, $1, $2);}
   ;
-
-var-decl: {$$=newast((char*)"var-decl",0,-1);}
-  | error {yyclearin; yyerror((char*)"float error", cols); yyerrok;} 
-  | ID ID-closure var-decl2 ASSIGNOP expression {$$=newast((char*)"var-decl",5,$1,$2,$3,$4,$5);}
+statement_list: {$$=newast("statement_list",0,-1);}
+  | statement statement_list{$$=newast("statement_list", 2, $1, $2);}
   ;
-
-var-decl2: {$$=newast((char*)"var-decl2",0,-1);}
-  | COLON TYPENAME {$$=newast((char*)"var-decl2",2,$1,$2);}
-  | COLON ID {$$=newast((char*)"var-decl2",2,$1,$2);}
+declaration: VAR var-decl_list{$$=newast("declaration", 2, $1, $2);}
+  | TYPE type-decl_list{$$=newast("declaration", 2, $1, $2);}
+  | PROCEDURE procedure-decl_list{$$=newast("declaration", 2, $1, $2);}
   ;
-
-ID-closure: {$$=newast((char*)"ID-closure",0,-1);}
-  | COMMA ID ID-closure {$$=newast((char*)"ID-closure",3,$1,$2,$3);}
+var-decl_list: {$$=newast("var-decl_list", 0, -1);}
+  | var-decl var-decl_list{$$=newast("var-decl_list", 2, $1, $2);}
   ;
-
-expression: INTEGER {$$=newast((char*)"integer", 1, $1);} 
-  | FLOAT {$$=newast((char*)"real", 1, $1);}
-  | unary-op expression {$$=newast((char*)"expression",2,$1,$2);}
-  | expression binary-op expression {$$=newast((char*)"expression",3,$1,$2,$3);}
-  | lvalue {$$=newast((char*)"expression",1,$1);}
-  | Lbracket expression Rbracket {$$=newast((char*)"expression",3,$1,$2,$3);}
-  | ID actual-params {$$=newast((char*)"expression",2,$1,$2);}
-  | ID comp-values {$$=newast((char*)"expression",2,$1,$2);}
-  | ID array-values {$$=newast((char*)"expression",2,$1,$2);}
+type-decl_list: {$$=newast("type-decl_list", 0, -1);}
+  | type-decl type-decl_list{$$=newast("type-decl_list", 2, $1, $2);}
   ;
-
-unary-op: ADD | MINUS | NOT {$$=newast((char*)"unary-op",1,$1);};
-
-binary-op: ADD | MINUS | STAR | DIVISON | DIV | MOD | OR | AND | BIGGER | SMALLER | EQUAL | NSMALLER | NBIGGER | SQUARE {$$=newast((char*)"binary-op",1,$1);};
-
-statement: {$$=newast((char*)"statement",0,-1);}
-  | error WRITE{yyclearin; yyerror((char*)"statement error, lack semi or other error",cols-5); yyerrok;}
-  | WRITE write-params SEMI statement {$$=newast((char*)"statement",4,$1,$2,$3,$4);}
-  | READ Lbracket lvalue lvalue-closure Rbracket SEMI statement {$$=newast((char*)"statement",7,$1,$2,$3,$4,$5,$6,$7);}
-  | lvalue ASSIGNOP expression SEMI statement {$$=newast((char*)"statement",5,$1,$2,$3,$4,$5);}
-  | ID actual-params SEMI statement {$$=newast((char*)"statement",4,$1,$2,$3,$4);}
-  | RETURN expression2 SEMI statement {$$=newast((char*)"statement",4,$1,$2,$3,$4);}
-  | EXIT SEMI statement {$$=newast((char*)"statement",3,$1,$2,$3);}
-  | FOR ID ASSIGNOP expression TO expression by-expression DO statement END SEMI statement {$$=newast((char*)"statement",12,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);}
-  | LOOP statement END SEMI statement {$$=newast((char*)"statement",5,$1,$2,$3,$4,$5);}
-  | WHILE expression DO statement END SEMI statement {$$=newast((char*)"statement",7,$1,$2,$3,$4,$5,$6,$7);}
-  | IF expression THEN statement statement-closure expression2 END SEMI statement {$$=newast((char*)"statement",9,$1,$2,$3,$4,$5,$6,$7,$8,$9);}
+procedure-decl_list: {$$=newast("procedure-decl_list", 0, -1);}
+  | procedure-decl procedure-decl_list{$$=newast("procedure-decl_list",2 , $1, $2);}
   ;
-
-by-expression: {$$=newast((char*)"by expression",0,-1);}
-  | BY expression {$$=newast((char*)"by expression",2,$1,$2);}
+var-decl: ID COMMA_ID_list COLON_type_option ASSIGNOP expression SEMI{$$=newast("var-decl", 6, $1, $2, $3, $4, $5, $6);}
   ;
-
-expression2: {$$=newast((char*)"expression2",0,-1);}
-  | expression {$$=newast((char*)"expression2",1,$1);}
-  | ELSE statement {$$=newast((char*)"expression2",2,$1,$2);}
+COMMA_ID_list: {$$=newast("COMMA_ID_list", 0, -1);}
+  | COMMA ID COMMA_ID_list{$$=newast("COMMA_ID_list", 3, $1, $2, $3);}
   ;
-
-statement-closure: {$$=newast((char*)"statement-closure",0,-1);}
-  | ELSEIF expression THEN statement statement-closure {$$=newast((char*)"statement-closure",5,$1,$2,$3,$4,$5);}
+COLON_type_option: {$$=newast("COLON_type_option", 0, -1);}
+  | COLON type {$$=newast("COLON_type_option", 2, $1, $2);}
   ;
-
-write-params: Lbracket write-expr write-expr-closure Rbracket {$$=newast((char*)"write-params",4,$1,$2,$3,$4);}
-  | Lbracket Rbracket {$$=newast((char*)"write-params",2,$1,$2);}
+type-decl: ID IS type SEMI {$$=newast("type-decl", 4, $1, $2, $3, $4);}
   ;
-
-write-expr: STRING {$$=newast((char*)"write-expr",1,$1);}
-  | expression {$$=newast((char*)"write-expr",1,$1);}
+procedure-decl: ID formal-params COLON_type_option IS body SEMI {$$=newast("procedure-decl", 6, $1, $2, $3, $4, $5, $6);}
   ;
-
-write-expr-closure: {$$=newast((char*)"write-expr-closure",0,-1);}
-  | COMMA write-expr write-expr-closure {$$=newast((char*)"write-expr-closure",3,$1,$2,$3);}
+type: ID {$$=newast("type", 1, $1);}
+  | ARRAY OF type {$$=newast("type", 3, $1, $2, $3);}
+  | RECORD component component_list END {$$=newast("type", 4, $1, $2, $3, $4);}
   ;
-
-lvalue-closure: {$$=newast((char*)"lvalue-closure",0,-1);}
-  | COMMA lvalue lvalue-closure {$$=newast((char*)"lvalue-closure",3,$1,$2,$3);}
+component_list: {$$=newast("component_list", 0, -1);}
+  | component component_list{$$=newast("component_list", 2, $1, $2);}
   ;
-
-lvalue: ID {$$=newast((char*)"lvalue",1,$1);}
-  | lvalue LSbracket expression RSbracket {$$=newast((char*)"lvalue",4,$1,$2,$3,$4);}
-  | lvalue SPOT ID {$$=newast((char*)"lvalue",3,$1,$2,$3);}
+component: ID COLON type SEMI {$$=newast("component", 4, $1, $2, $3, $4);}
   ;
-
-type-decl: ID IS type SEMI {$$=newast((char*)"type-decl",4,$1,$2,$3,$4);}
+formal-params: Lbracket fp-section SEMI_fp-section_list Rbracket {$$=newast("formal-params", 4, $1, $2, $3, $4);}
+  | Lbracket Rbracket {$$=newast("formal-params", 2, $1, $2);}
   ;
-
-type-decl-closure: {$$=newast((char*)"type-decl-closure",0,-1);}
-  | type-decl type-decl-closure {$$=newast((char*)"type-decl-closure",2,$1,$2);}
+SEMI_fp-section_list: {$$=newast("SEMI_fp-section_list", 0, -1);}
+  | SEMI fp-section SEMI_fp-section_list {$$=newast("SEMI_fp-section_list", 3, $1, $2, $3);}
   ;
-
-type: ID {$$=newast((char*)"type",1,$1);}
-  | TYPENAME {$$=newast((char*)"type",1,$1);}
-  | ARRAY OF type {$$=newast((char*)"type",3,$1,$2,$3);}
-  | RECORD component component-closure END {$$=newast((char*)"type",4,$1,$2,$3,$4);}
+fp-section: ID COMMA_ID_list COLON type {$$=newast("fp-section", 4, $1, $2, $3, $4);}
   ;
-
-component: ID COLON type SEMI {$$=newast((char*)"component",4,$1,$2,$3,$4);};
-
-component-closure: {$$=newast((char*)"component-closure",0,-1);}
-  | component component-closure {$$=newast((char*)"component-closure",2,$1,$2);}
+statement: lvalue ASSIGNOP expression SEMI {$$=newast("statement", 4, $1, $2, $3, $4);}
+  | ID actual-params SEMI {$$=newast("statement", 3, $1, $2, $3);}
+  | READ Lbracket lvalue COMMA_lvalue_list Rbracket SEMI {$$=newast("statement",6, $1, $2, $3, $4, $5, $6);}
+  | WRITE write-params SEMI {$$=newast("statement", 3, $1, $2, $3);}
+  | IF expression THEN statement_list ELSIF_statement_list_list ELSE_statement_list_option END SEMI {$$=newast("statement", 8, $1, $2, $3, $4, $5, $6, $7, $8);}
+  | WHILE expression DO statement_list END SEMI {$$=newast("statement", 6, $1, $2, $3, $4, $5, $6);}
+  | LOOP statement_list END SEMI {$$=newast("statement", 4, $1, $2, $3, $4);}
+  | FOR ID ASSIGNOP expression TO expression BY_expression_option DO statement_list END SEMI {$$=newast("statement", 11, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);}
+  | EXIT SEMI {$$=newast("statement", 2, $1, $2);}
+  | RETURN expression_option SEMI {$$=newast("statement", 3, $1, $2, $3);}
   ;
-
-procedure-decl-closure: {$$=newast((char*)"procedure-decl-closure",0,-1);}
-  | procedure-decl procedure-decl-closure {$$=newast((char*)"procedure-decl-closure",2,$1,$2);}
+COMMA_lvalue_list: {$$=newast("COMMA_lvalue_list", 0, -1);}
+  | COMMA lvalue COMMA_lvalue_list {$$=newast("COMMA_lvalue_list", 3, $1, $2, $3);}
   ;
-
-procedure-decl: ID formal-params procedure-decl2 IS body SEMI {$$=newast((char*)"procedure-decl",6,$1,$2,$3,$4,$5,$6);}
-  | ID formal-params procedure-decl2 PROCEDURE {yyclearin;yyerror((char*)"procedure error:, wrong format in declaration",cols-9); yyerrok;}
+ELSIF_statement_list_list: {$$=newast("ELSIF_statement_list_list", 0, -1);}
+  | ELSIF expression THEN statement_list ELSIF_statement_list_list{$$=newast("ELSIF_statement_list_list", 5, $1, $2, $3, $4, $5);}
   ;
-
-procedure-decl2: {$$=newast((char*)"procedure-decl2",0,-1);}
-  | COLON type {$$=newast((char*)"procedure-decl2",2,$1,$2);}
+ELSE_statement_list_option: {$$=newast("ELSE_statement_list_option", 0, -1);}
+  | ELSE statement_list {$$=newast("ELSE_statement_list_option", 2, $1, $2);}
   ;
-
-formal-params: Lbracket Rbracket {$$=newast((char*)"formal-params",2,$1,$2);}
-  | Lbracket fp-section fp-section-closure Rbracket {$$=newast((char*)"formal-params",4,$1,$2,$3,$4);}
+BY_expression_option: {$$=newast("BY_expression_option", 0, -1);}
+  | BY expression {$$=newast("BY_expression_option", 2, $1, $2);}
   ;
-
-fp-section-closure: {$$=newast((char*)"fp-section-closure",0,-1);}
-  | SEMI fp-section fp-section-closure {$$=newast((char*)"fp-section-closure",3,$1,$2,$3);}
+expression_option: {$$=newast("expression_option", 0, -1);}
+  | expression {$$=newast("expression_option", 1, $1);}
   ;
-
-fp-section: ID ID-closure COLON type {$$=newast((char*)"fp-section",4,$1,$2,$3,$4);};
-
-actual-params: Lbracket Rbracket {$$=newast((char*)"actual-params",2,$1,$2);}
-  | Lbracket expression expression-closure Rbracket {$$=newast((char*)"actual-params",4,$1,$2,$3,$4);}
+write-params: Lbracket write-expr COMMA_write-expr_list Rbracket {$$=newast("write-params", 4, $1, $2, $3, $4);}
+  | Lbracket Rbracket {$$=newast("write-params", 2, $1, $2);}
   ;
-
-expression-closure: {$$=newast((char*)"expression-closure",0,-1);}
-  | COMMA expression expression-closure {$$=newast((char*)"expression-closure",3,$1,$2,$3);}
+COMMA_write-expr_list: {$$=newast("COMMA_write-expr_list", 0, -1);}
+  | COMMA write-expr COMMA_write-expr_list {$$=newast("COMMA_write-expr_list", 3, $1, $2, $3);}
   ;
-
-array-value: array2 expression {$$=newast((char*)"array-value",2,$1,$2);};
-
-array2: {$$=newast((char*)"array-value",0,-1);}
-  | expression OF {$$=newast((char*)"array-value",2,$1,$2);}
+write-expr: STRING {$$=newast("write-expr", 1, $1);}
+  | expression {$$=newast("write-expr", 1, $1);}
   ;
-
-array-values: Llimit array-value array-closure Rlimit {$$=newast((char*)"array-values",4,$1,$2,$3,$4);};
-
-array-closure: {$$=newast((char*)"array-closure",0,-1);}
-  | COMMA array-value array-closure {$$=newast((char*)"array-closure",3,$1,$2,$3);}
+expression: number {$$=newast("expression", 1, $1);}
+  | lvalue {$$=newast("expression", 1, $1);}
+  | Lbracket expression Rbracket {$$=newast("expression", 3, $1, $2, $3);}
+  | unary-op expression %prec UNARYOP {$$=newast("expression", 2, $1, $2);}
+  | expression binary-op expression {$$=newast("expression", 3, $1, $2, $3);}
+  | ID actual-params {$$=newast("expression", 2, $1, $2);}
+  | ID comp-values {$$=newast("expression", 2, $1, $2);}
+  | ID array-values {$$=newast("expression", 2, $1, $2);}
   ;
-
-comp-values: LHbracket ID ASSIGNOP expression comp-closure RHbracket {$$=newast((char*)"comp-values",6,$1,$2,$3,$4,$5,$6);};
-
-comp-closure: {$$=newast((char*)"comp-closure",0,-1);}
-  | SEMI ID ASSIGNOP expression comp-closure {$$=newast((char*)"comp-closure",5,$1,$2,$3,$4,$5);}
+lvalue: ID {$$=newast("lvalue", 1, $1);}
+  | lvalue LSbracket expression RSbracket {$$=newast("lvalue", 4, $1, $2, $3, $4);}
+  | lvalue SPOT ID {$$=newast("lvalue", 3, $1, $2, $3);}
+  ;
+actual-params: Lbracket expression COMMA_expression_list Rbracket {$$=newast("actual-params", 4, $1, $2, $3, $4);}
+  | Lbracket Rbracket {$$=newast("actual-params", 2, $1, $2);}
+  ;
+COMMA_expression_list: {$$=newast("COMMA_expression_list", 0, -1);}
+  | COMMA expression COMMA_expression_list {$$=newast("COMMA_expression_list", 3, $1, $2, $3);}
+  ;
+comp-values: LCbracket ID ASSIGNOP expression tmp_list_1 RCbracket {$$=newast("comp-values", 6, $1, $2, $3, $4, $5, $6);}
+  ;
+tmp_list_1: {$$=newast("tmp_list_1", 0, -1);}
+  | SEMI ID ASSIGNOP expression tmp_list_1 {$$=newast("tmp_list_1", 5, $1, $2, $3, $4, $5);}
+  ;
+array-values: Llimit array-value COMMA_array-value_list Rlimit {$$=newast("array-values", 4, $1, $2, $3, $4);}
+  ;
+COMMA_array-value_list: {$$=newast("COMMA_expression_list", 0, -1);}
+  | COMMA array-value COMMA_array-value_list {$$=newast("COMMA_array-value_list", 3, $1, $2, $3);}
+  ;
+array-value: expression {$$=newast("array-value", 1, $1);}
+  | expression OF expression {$$=newast("array-value", 3, $1, $2, $3);}
+  ;
+number: INTEGER {$$=newast("number", 1, $1);}
+  | REAL {$$=newast("number", 1, $1);}
+  ;
+unary-op: ADD | MINUS | NOT {$$=newast("unary-op", 1, $1);}
+  ;
+binary-op: ADD | MINUS | STAR | DIVISON | DIV | MOD | OR | AND | BIGGER | SMALLER | NBIGGER | NSMALLER | EQUAL | SQUARE {$$=newast("binary-op", 1, $1);}
   ;
 
 %%

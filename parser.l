@@ -17,9 +17,9 @@ BY BY
 DIV DIV
 DO DO
 ELSE ELSE
-ELSEIF ELSIF
+ELSIF ELSIF
 VAR VAR
-BEGIN_1 BEGIN
+MY_BEGIN BEGIN
 END END
 WRITE WRITE 
 READ READ
@@ -52,8 +52,8 @@ Rbracket \)
 LSbracket \[
 RSbracket \]
 SPOT \.
-LHbracket \{
-RHbracket \}
+LCbracket \{
+RCbracket \}
 
 BIGGER >
 SMALLER <
@@ -66,7 +66,7 @@ Llimit \[<
 Rlimit >\]
 
 INTEGER [1-9]+[0-9]*|0 
-FLOAT   [0-9]+\.[0-9]* 
+REAL   [0-9]+\.[0-9]* 
 
 SPACE [ \t\r]*
 EOL \n
@@ -76,7 +76,6 @@ NEW_LINE        [\n]
 LETTER		    [A-Z]|[a-z]
 DIGIT           [0-9]
 STRING          \"[^\"^\n]*\"
-TYPENAME        (INTEGER)|(REAL)
 ID		        {LETTER}+({LETTER}|{DIGIT})*
 UN_STRING       \"[^\"^\n]*\n
 
@@ -86,63 +85,62 @@ UN_STRING       \"[^\"^\n]*\n
 {WS}                    {cols += yyleng; lcol += yyleng; }
 {SPACE}                 {cols += yyleng; lcol += yyleng; }
 {EOL}                   {cols = 1; lcol = 1; rows++; }
-{TYPENAME}              {yylval.a=newast((char*)"TYPENAME",0,yylineno,cols); cols+=yyleng;  return TYPENAME;}
-{SEMI}                  {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng;  return SEMI;}
-{COLON}                 {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng;  return COLON;}
-{COMMA}                 {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng;  return COMMA;}
-{ASSIGNOP}              {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return ASSIGNOP;}
-{Lbracket}                    {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng;  return Lbracket;}
-{Rbracket}                     {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng;  return Rbracket;}
-{ADD}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return ADD;}
-{MINUS}                   {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return MINUS;}
-{STAR}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return STAR;}
-{DIVISON}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return DIVISON;}
-{PROGRAM}                 {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return PROGRAM;}
-{IS}                      {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return IS;}
-{AND}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return AND;}
-{ARRAY}                   {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return ARRAY;}
-{BEGIN_1}                   {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return BEGIN_1;}
-{BY}                      {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return BY;}
-{DIV}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return DIV;}
-{DO}                      {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return DO;}
-{ELSE}                    {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return ELSE;}
-{ELSEIF}                  {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return ELSEIF;}
-{VAR}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return VAR;}
-{END}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return END;}
-{WRITE}                   {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng;  return WRITE;} 
-{STRING}                  {yylval.a=newast((char*)"STRING",0,yylineno,cols); cols+=yyleng; tokens_num++;  return STRING;}
-{INTEGER}			      {yylval.a=newast((char*)"INTEGER",0,yylineno,cols); cols+=yyleng; tokens_num++; return INTEGER;}
-{FLOAT}			      {yylval.a=newast((char*)"REAL",0,yylineno,cols); cols+=yyleng; tokens_num++;  return FLOAT;}
-{READ}                    {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return READ;}
-{LSbracket}               {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return LSbracket;}
-{RSbracket}               {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return RSbracket;}
-{SPOT}                    {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return SPOT;}
-{OF}                      {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return OF;}
-{RECORD}                  {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return RECORD;}
-{PROCEDURE}               {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return PROCEDURE;}
-{TYPE}                    {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return TYPE;}
-{NOT}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return NOT;}
-{MOD}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return MOD;}
-{OR}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return OR;}
-{BIGGER}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return BIGGER;}
-{SMALLER}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return SMALLER;}
-{EQUAL}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return EQUAL;}
-{NSMALLER}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return NSMALLER;}
-{NBIGGER}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return NBIGGER;}
-{SQUARE}                     {yylval.a=newast((char*)"OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return SQUARE;}
-{Llimit}                     {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return Llimit;}
-{Rlimit}                     {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return Rlimit;}
-{LHbracket}                     {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return LHbracket;}
-{RHbracket}                     {yylval.a=newast((char*)"DELIMITER",0,yylineno,cols); cols+=yyleng; return RHbracket;}
-{RETURN}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return RETURN;}
-{EXIT}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return EXIT;}
-{FOR}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return FOR;}
-{LOOP}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return LOOP;}
-{WHILE}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return WHILE;}
-{IF}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return IF;}
-{THEN}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return THEN;}
-{TO}                     {yylval.a=newast((char*)"KEYWORD",0,yylineno,cols); cols+=yyleng; return TO;}
-{ID}                      {yylval.a=newast((char*)"IDENTIFIER",0,yylineno,cols); cols+=yyleng; tokens_num++; return ID;}
+{SEMI}                  {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng;  return SEMI;}
+{COLON}                 {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng;  return COLON;}
+{COMMA}                 {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng;  return COMMA;}
+{ASSIGNOP}              {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return ASSIGNOP;}
+{Lbracket}                    {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng;  return Lbracket;}
+{Rbracket}                     {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng;  return Rbracket;}
+{ADD}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return ADD;}
+{MINUS}                   {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return MINUS;}
+{STAR}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return STAR;}
+{DIVISON}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++;  return DIVISON;}
+{PROGRAM}                 {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return PROGRAM;}
+{IS}                      {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return IS;}
+{AND}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return AND;}
+{ARRAY}                   {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return ARRAY;}
+{MY_BEGIN}                   {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return MY_BEGIN;}
+{BY}                      {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return BY;}
+{DIV}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return DIV;}
+{DO}                      {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return DO;}
+{ELSE}                    {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return ELSE;}
+{ELSIF}                  {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return ELSIF;}
+{VAR}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return VAR;}
+{END}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return END;}
+{WRITE}                   {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng;  return WRITE;} 
+{STRING}                  {yylval.node=newast("STRING",0,yylineno,cols); cols+=yyleng; tokens_num++;  return STRING;}
+{INTEGER}			      {yylval.node=newast("INTEGER",0,yylineno,cols); cols+=yyleng; tokens_num++; return INTEGER;}
+{REAL}			      {yylval.node=newast("REAL",0,yylineno,cols); cols+=yyleng; tokens_num++;  return REAL;}
+{READ}                    {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return READ;}
+{LSbracket}               {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return LSbracket;}
+{RSbracket}               {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return RSbracket;}
+{SPOT}                    {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return SPOT;}
+{OF}                      {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return OF;}
+{RECORD}                  {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return RECORD;}
+{PROCEDURE}               {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return PROCEDURE;}
+{TYPE}                    {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return TYPE;}
+{NOT}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return NOT;}
+{MOD}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return MOD;}
+{OR}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return OR;}
+{BIGGER}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return BIGGER;}
+{SMALLER}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return SMALLER;}
+{EQUAL}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return EQUAL;}
+{NSMALLER}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return NSMALLER;}
+{NBIGGER}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return NBIGGER;}
+{SQUARE}                     {yylval.node=newast("OPERATOR",0,yylineno,cols); cols+=yyleng; tokens_num++; return SQUARE;}
+{Llimit}                     {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return Llimit;}
+{Rlimit}                     {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return Rlimit;}
+{LCbracket}                     {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return LCbracket;}
+{RCbracket}                     {yylval.node=newast("DELIMITER",0,yylineno,cols); cols+=yyleng; return RCbracket;}
+{RETURN}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return RETURN;}
+{EXIT}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return EXIT;}
+{FOR}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return FOR;}
+{LOOP}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return LOOP;}
+{WHILE}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return WHILE;}
+{IF}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return IF;}
+{THEN}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return THEN;}
+{TO}                     {yylval.node=newast("KEYWORD",0,yylineno,cols); cols+=yyleng; return TO;}
+{ID}                      {yylval.node=newast("IDENTIFIER",0,yylineno,cols); cols+=yyleng; tokens_num++; return ID;}
 
 {UN_STRING}             {lcol = 1; return UTSTRING;}
 .                       {return BADCHAR;}

@@ -5,6 +5,7 @@
 #include <cstdarg> //变长参数函数所需的头文件
 #include "yacc.h"
 #include "syntax_tree.h"
+using namespace std;
 
 int yylex();
 int yyparse();
@@ -26,6 +27,8 @@ int main(int argc, char *args[])
 {
   if (argc > 1) {
     FILE *file = fopen(args[1], "r");
+    cout << "this is agrs[1]" << args[1] << endl;
+    cout << "this is agrs[2]" << args[2] << endl;
     if (argc > 2) {
         filename = args[2];
     }else {
@@ -46,7 +49,7 @@ int main(int argc, char *args[])
   
   fclose(fp);
 
-  deleteAst(ast_root);
+  // deleteAst(ast_root);
   return 0;
 }
 
@@ -147,7 +150,7 @@ void yyerror(char *s, ...) // 变长参数错误处理函数
   flag = 1;
   va_list ap;
   va_start(ap, s);
-  if (!strcmp(s, "syntax error"))
+  if (!strcmp(s, "syntax error!"))
   {
     return;
   }
