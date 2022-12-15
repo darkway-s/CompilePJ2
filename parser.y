@@ -6,9 +6,6 @@ using namespace std;
 
 struct Ast *ast_root = NULL;
 
-void yyerror(const char* msg) {
-  cerr << msg << endl;
-}
 %}
 
 %union {
@@ -73,6 +70,7 @@ declaration: VAR var-decl_list{$$=newast("declaration", 2, $1, $2);}
   | PROCEDURE procedure-decl_list{$$=newast("declaration", 2, $1, $2);}
   ;
 var-decl_list: {$$=newast("var-decl_list", 0, -1);}
+  | error {yyclearin; yyerror("var declaration error", cols); yyerrok;} // error decl
   | var-decl var-decl_list{$$=newast("var-decl_list", 2, $1, $2);}
   ;
 type-decl_list: {$$=newast("type-decl_list", 0, -1);}
@@ -92,6 +90,7 @@ COLON_type_option: {$$=newast("COLON_type_option", 0, -1);}
 type-decl: ID IS type SEMI {$$=newast("type-decl", 4, $1, $2, $3, $4);}
   ;
 procedure-decl: ID formal-params COLON_type_option IS body SEMI {$$=newast("procedure-decl", 6, $1, $2, $3, $4, $5, $6);}
+  | ID formal-params COLON_type_option PROCEDURE {yyclearin;yyerror("procedure error:, wrong format?", cols - 5); yyerrok;}
   ;
 type: ID {$$=newast("type", 1, $1);}
   | ARRAY OF type {$$=newast("type", 3, $1, $2, $3);}
@@ -111,6 +110,7 @@ SEMI_fp-section_list: {$$=newast("SEMI_fp-section_list", 0, -1);}
 fp-section: ID COMMA_ID_list COLON type {$$=newast("fp-section", 4, $1, $2, $3, $4);}
   ;
 statement: lvalue ASSIGNOP expression SEMI {$$=newast("statement", 4, $1, $2, $3, $4);}
+  | error WRITE{yyclearin; yyerror("statement error, lack semicolon?", cols - 9); yyerrok;}
   | ID actual-params SEMI {$$=newast("statement", 3, $1, $2, $3);}
   | READ Lbracket lvalue COMMA_lvalue_list Rbracket SEMI {$$=newast("statement",6, $1, $2, $3, $4, $5, $6);}
   | WRITE write-params SEMI {$$=newast("statement", 3, $1, $2, $3);}

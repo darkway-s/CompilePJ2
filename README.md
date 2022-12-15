@@ -11,6 +11,19 @@
 3. `sudo apt-get install flex`
 4. `sudo apt-get install bison`
 
+
+### 测试
+在根目录下
+
+执行
+```bash
+make
+make test
+```
+输出会生成在ans文件夹里
+
+
+
 ### DEMO
 提供一个表达式计算作为bison入门的参考：[bison_demo](bison_demo)
 

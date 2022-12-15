@@ -1,0 +1,1 @@
+(row: 7, col: 1):error: statement error, lack semicolon?

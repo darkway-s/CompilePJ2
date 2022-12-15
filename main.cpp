@@ -11,42 +11,188 @@ int yylex();
 int yyparse();
 extern "C" FILE *yyin;
 FILE *fp = stdin;
-char* filename;
+char *filename;
 
 extern "C" int tokens_num;
 extern "C" int lcol;
+extern "C" int col;
 extern "C" int rows;
 extern "C" char *yytext;
 extern "C" int yyleng;
 
+#define MAXSTRING_LEN 257
+#define MAXIDENTI_LEN 255
+
 extern "C" struct Ast *ast_root;
 int flag = 0;
+int lex_tag = 0;
 int i;
+
+int Has_TAB(char *target)
+{
+  int limit = strlen(target);
+  for (int i = 0; i < limit; ++i)
+  {
+    if (target[i] == '\t')
+      return 1;
+  }
+  return 0;
+}
+
+void doutput(FILE *fpl, const char *msg)
+{
+  fprintf(fpl, "%s\n", msg);
+}
+void doutput(FILE *fpl, const char *typ, const char *msg, int r, int lc)
+{
+  fprintf(fpl, "%d\t\t%d\t\t\t\t%s\t\t\t\t%s\n", r, lc, typ, msg);
+}
 
 int main(int argc, char *args[])
 {
-  if (argc > 1) {
+  if (argc > 1)
+  {
     FILE *file = fopen(args[1], "r");
     cout << "this is agrs[1]" << args[1] << endl;
     cout << "this is agrs[2]" << args[2] << endl;
-    if (argc > 2) {
-        filename = args[2];
-    }else {
-        printf("Please designate the name of the outfile!\n");
-        return 1;
+    if (argc > 2)
+    {
+      filename = args[2];
     }
-    if (!file) {
+    else
+    {
+      printf("Please designate the name of the outfile!\n");
+      return 1;
+    }
+    if (!file)
+    {
       printf("can not open file");
       return 1;
-    } else {
+    }
+    else
+    {
       yyin = file;
     }
   }
 
-  fp = fopen(filename,"w+");
-  
-  yyparse();
-  
+  // 额外词法分析
+  if (argc > 3 && !strcmp(args[3], "-lex"))
+  {
+    lex_tag = 1;
+  }
+
+  fp = fopen(filename, "w+");
+
+  // 针对case_11
+  if (argc > 3 && !strcmp(args[3], "-d"))
+  {
+    doutput(fp, "ROW\t\tCOL\t\t\t\tTYPE\t\t\t\t\tTOKEN/ERROR MESSAGE");
+    while (1)
+    {
+      int n = yylex();
+      if (n == T_EOF)
+      {
+        break;
+      }
+      else if (n == C_EOF)
+      {
+        doutput(fp, "comment  ", "an unterminated comment", rows, lcol);
+        break;
+      }
+      else
+      {
+        switch (n)
+        {
+        case STRING:
+          if (yyleng > MAXSTRING_LEN)
+          {
+            doutput(fp, "string    ", "an overly long string", rows, lcol);
+            tokens_num--;
+          }
+          // an invalid string with tab(s) in it
+          else if (Has_TAB(yytext))
+          {
+            doutput(fp, "string    ", "an invalid string with tab(s) in it", rows, lcol);
+            tokens_num--;
+          }
+          // an ok string
+          else
+          {
+            doutput(fp, "string    ", yytext, rows, lcol);
+          }
+          lcol += yyleng;
+          break;
+
+        case ID:
+          // an overly long identifier
+          if (yyleng > MAXIDENTI_LEN)
+          {
+            doutput(fp, "identifier", "an overly long identifier", rows, lcol);
+            tokens_num--;
+          }
+          // an ok identifier
+          else
+          {
+            doutput(fp, "identifier", yytext, rows, lcol);
+          }
+          lcol += yyleng;
+          break;
+
+        case UTSTRING:
+          doutput(fp, "string    ", "an unterminated string", rows, lcol);
+          rows++;
+          break;
+
+        case BADCHAR:
+          doutput(fp, "bad char  ", "a bad character (bell)", rows, lcol);
+          lcol += yyleng;
+          break;
+
+        case INTEGER:
+          // an out of range integer
+          if (yyleng > 10 || atoll(yytext) > 2147483647)
+          {
+            doutput(fp, "integer    ", "an out of range integer", rows, lcol);
+            tokens_num--;
+          }
+          // valid case
+          else
+          {
+            doutput(fp, "integer    ", yytext, rows, lcol);
+          }
+          lcol += yyleng;
+          break;
+
+        case ADD:
+        case MINUS:
+        case STAR:
+        case DIVISON:
+        case BIGGER:
+        case SMALLER:
+        case NBIGGER:
+        case NSMALLER:
+        case SQUARE:
+        case ASSIGNOP:
+          doutput(fp, "operator  ", yytext, rows, lcol);
+          lcol += yyleng;
+          break;
+
+        case REAL:
+          doutput(fp, "real      ", yytext, rows, lcol);
+          lcol += yyleng;
+          break;
+
+        default:
+          break;
+        }
+      }
+    }
+    fprintf(fp, "\nThe number of the tokens: %d\n", tokens_num);
+  }
+  else
+  {
+    yyparse();
+  }
   fclose(fp);
 
   // deleteAst(ast_root);
@@ -121,9 +267,14 @@ void eval(struct Ast *a, int level)
       else if (!strcmp(a->name, "REAL"))
         fprintf(fp, ": %.1f", a->flt);
       else
-        fprintf(fp, ": %s", a->content);
+      {
+        if (a->content)
+          fprintf(fp, ": %s", a->content);
+      }
+
       // else
-      fprintf(fp, "    (row: %d, col: %d)", a->line, a->cols);
+      // fprintf(fp, "    (row: %d, col: %d)", a->line, a->cols);
+      fprintf(fp, "\t\t (%d:%d)", a->line, a->cols);
     }
     fprintf(fp, "\n");
 
@@ -145,21 +296,40 @@ void evalformat(struct Ast *a, int level)
   }
 }
 
-void yyerror(char *s, ...) // 变长参数错误处理函数
+void yyerror(char *s, int err_cols)
 {
   flag = 1;
-  va_list ap;
-  va_start(ap, s);
-  if (!strcmp(s, "syntax error!"))
+  // 仅做语法分析
+  if (lex_tag == 0)
   {
-    return;
+    if (!strcmp(s, "syntax error"))
+    {
+      return;
+    }
+    fprintf(fp, "(row: %d, col: %d):error: %s\n", yylineno, err_cols, s); // 错误行,列,内容
   }
-  fprintf(fp, "(row: %d, ", yylineno); // 错误行号
-  int cols = va_arg(ap, int);
-  fprintf(fp, "col: %d) :error:", cols); // 错误列号
-  vfprintf(fp, s, ap);
-  fprintf(fp, "\n");
+  // 也做词法分析
+  else
+  {
+    fprintf(fp, "(row: %d):error: %s\n", yylineno, s); // 错误行,内容
+  }
 }
+
+void yyerror(char *s)
+{
+  flag = 1;
+  // 仅做语法分析
+  if (lex_tag == 0)
+  {
+    if (!strcmp(s, "syntax error"))
+    {
+      return;
+    }
+  }
+  // 也做词法分析
+  fprintf(fp, "(row: %d):error: %s\n", yylineno, s); // 错误行,内容
+}
+
 
 void deleteAst(struct Ast *a) // 回收内存~
 {

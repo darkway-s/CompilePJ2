@@ -19,7 +19,6 @@ clean:
 .PHONY: clean
 
 test:
-			./parser tests/case_0.pcat  ans/res0.txt
 			./parser tests/case_1.pcat  ans/res1.txt
 			./parser tests/case_2.pcat  ans/res2.txt
 			./parser tests/case_3.pcat  ans/res3.txt
@@ -30,3 +29,8 @@ test:
 			./parser tests/case_8.pcat  ans/res8.txt
 			./parser tests/case_9.pcat  ans/res9.txt
 			./parser tests/case_10.pcat  ans/res10.txt
+			./parser tests/case_12.pcat  ans/res12.txt
+			./parser tests/case_13.pcat  ans/res13.txt
+			./parser tests/case_14.pcat  ans/res14.txt
+
+			./parser tests/case_11.pcat  ans/res11.txt -d
