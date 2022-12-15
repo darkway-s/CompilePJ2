@@ -53,8 +53,8 @@ struct Ast *ast_root = NULL;
 
 /*出现xxx_list/option会多写一个它的定义,其余按照PCAT语言参考指南的顺序*/
 %%
-program: {$$=CreateAst("program", 0, -1);} /*没匹配到则默认创建的节点*/
-  | PROGRAM IS body SEMI{$$=CreateAst("program", 4, $1, $2, $3, $4); PrintAst($$, 0);}
+program: {$$=CreateAst("program", 0, -1);ast_root = $$;} /*没匹配到则默认创建的节点*/
+  | PROGRAM IS body SEMI{$$=CreateAst("program", 4, $1, $2, $3, $4); ast_root = $$; PrintAst($$, 0);}
   ;
 body: {$$=CreateAst("body", 0, -1);}
   | declaration_list MY_BEGIN statement_list END{$$=CreateAst("body", 4, $1, $2, $3, $4);}

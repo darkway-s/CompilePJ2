@@ -32,5 +32,4 @@ test:
 			./parser tests/case_12.pcat  ans/res12.txt
 			./parser tests/case_13.pcat  ans/res13.txt
 			./parser tests/case_14.pcat  ans/res14.txt
-
 			./parser tests/case_11.pcat  ans/res11.txt -d

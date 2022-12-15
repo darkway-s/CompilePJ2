@@ -192,10 +192,12 @@ int main(int argc, char *args[])
   else
   {
     yyparse();
+    //程序正常运行则清除
+    if(flag==0)
+      deleteAst(ast_root);
   }
   fclose(fp);
 
-  // deleteAst(ast_root);
   return 0;
 }
 
