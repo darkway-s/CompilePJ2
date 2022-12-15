@@ -273,7 +273,7 @@ void PrintNode(struct Ast *a, int level)
 
       // else
       // fprintf(fp, "    (row: %d, col: %d)", a->line, a->cols);
-      fprintf(fp, "\t\t (%d:%d)", a->line, a->cols);
+      fprintf(fp, "\t\t @(%d:%d)", a->line, a->cols);
     }
     fprintf(fp, "\n");
 
