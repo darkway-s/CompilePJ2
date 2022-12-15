@@ -53,15 +53,15 @@ int main(int argc, char *args[])
   if (argc > 1)
   {
     FILE *file = fopen(args[1], "r");
-    cout << "this is agrs[1]" << args[1] << endl;
-    cout << "this is agrs[2]" << args[2] << endl;
+    cout << "Read from " << args[1] << endl;
+    cout << "Write to " << args[2] << endl << endl;
     if (argc > 2)
     {
       filename = args[2];
     }
     else
     {
-      printf("Please designate the name of the outfile!\n");
+      printf("need destination filename\n");
       return 1;
     }
     if (!file)
@@ -200,7 +200,7 @@ int main(int argc, char *args[])
 }
 
 /*构造抽象语法树,变长参数，name:语法单元名字；num:变长参数中语法结点个数*/
-struct Ast *newast(char *name, int num, ...)
+struct Ast *CreateAst(char *name, int num, ...)
 {
   va_list valist;                   // 定义变长参数列表
   struct Ast *a = new (struct Ast); // 新生成的父节点
@@ -252,7 +252,7 @@ struct Ast *newast(char *name, int num, ...)
 }
 
 /*遍历抽象语法树，level为树的层数*/
-void eval(struct Ast *a, int level)
+void PrintNode(struct Ast *a, int level)
 {
   if (a != NULL)
   {
@@ -261,7 +261,6 @@ void eval(struct Ast *a, int level)
     if (a->line != -1)
     {                              // 产生空的语法单元不需要打印信息
       fprintf(fp, "%s ", a->name); // 打印语法单元名字
-      // if((!strcmp(a->name,"ID"))||(!strcmp(a->name,"TYPE")))fprintf(fp,": %s ",a->idtype);
       if (!strcmp(a->name, "INTEGER"))
         fprintf(fp, ": %d", a->intgr);
       else if (!strcmp(a->name, "REAL"))
@@ -281,18 +280,18 @@ void eval(struct Ast *a, int level)
     // DFS
     for (std::vector<Ast *>::iterator iter = a->children.begin(); iter != a->children.end(); iter++)
     {
-      eval((*iter), level + 1);
+      PrintNode((*iter), level + 1);
     }
   }
 }
 
-void evalformat(struct Ast *a, int level)
+void PrintAst(struct Ast *a, int level)
 {
   if (flag == 0)
   {
-    printf("打印syntax tree:\n");
-    eval(a, level);
-    printf("syntax tree打印完毕!\n\n");
+    cout << "Printing Tree>>>" << endl;
+    PrintNode(a, level);
+    cout << "Success!" << endl << endl;
   }
 }
 

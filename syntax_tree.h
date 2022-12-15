@@ -31,11 +31,11 @@ struct Ast
 };
 
 /*构造抽象语法树,变长参数，name:语法单元名字；num:变长参数中语法结点个数*/
-struct Ast *newast(char *name, int num, ...);
+struct Ast *CreateAst(char *name, int num, ...);
 
 /*遍历抽象语法树，level为树的层数*/
-void eval(struct Ast *, int level);
+void PrintNode(struct Ast *, int level);
 
-void evalformat(struct Ast *, int);
+void PrintAst(struct Ast *, int);
 
 void deleteAst(struct Ast *a); // 回收内存~
