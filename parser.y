@@ -70,7 +70,7 @@ declaration: VAR var-decl_list{$$=CreateAst("declaration", 2, $1, $2);}
   | PROCEDURE procedure-decl_list{$$=CreateAst("declaration", 2, $1, $2);}
   ;
 var-decl_list: {$$=CreateAst("var-decl_list", 0, -1);}
-  | error {yyclearin; yyerror("var declaration error", cols); yyerrok;} // error decl
+  | error {yyclearin; yyerror("unknown number", cols); yyerrok;} // error decl
   | var-decl var-decl_list{$$=CreateAst("var-decl_list", 2, $1, $2);}
   ;
 type-decl_list: {$$=CreateAst("type-decl_list", 0, -1);}
@@ -90,7 +90,7 @@ COLON_type_option: {$$=CreateAst("COLON_type_option", 0, -1);}
 type-decl: ID IS type SEMI {$$=CreateAst("type-decl", 4, $1, $2, $3, $4);}
   ;
 procedure-decl: ID formal-params COLON_type_option IS body SEMI {$$=CreateAst("procedure-decl", 6, $1, $2, $3, $4, $5, $6);}
-  | ID formal-params COLON_type_option PROCEDURE {yyclearin;yyerror("procedure error:, wrong format?", cols - 5); yyerrok;}
+  | ID formal-params COLON_type_option body SEMI{yyclearin;yyerror("expected IS", cols); yyerrok;}
   ;
 type: ID {$$=CreateAst("type", 1, $1);}
   | ARRAY OF type {$$=CreateAst("type", 3, $1, $2, $3);}
@@ -110,10 +110,10 @@ SEMI_fp-section_list: {$$=CreateAst("SEMI_fp-section_list", 0, -1);}
 fp-section: ID COMMA_ID_list COLON type {$$=CreateAst("fp-section", 4, $1, $2, $3, $4);}
   ;
 statement: lvalue ASSIGNOP expression SEMI {$$=CreateAst("statement", 4, $1, $2, $3, $4);}
-  | error WRITE{yyclearin; yyerror("statement error, lack semicolon?", cols - 9); yyerrok;}
   | ID actual-params SEMI {$$=CreateAst("statement", 3, $1, $2, $3);}
   | READ Lbracket lvalue COMMA_lvalue_list Rbracket SEMI {$$=CreateAst("statement",6, $1, $2, $3, $4, $5, $6);}
   | WRITE write-params SEMI {$$=CreateAst("statement", 3, $1, $2, $3);}
+  | WRITE write-params {yyclearin; yyerror("expected semicolon", cols - 5); yyerrok;}
   | IF expression THEN statement_list ELSIF_statement_list_list ELSE_statement_list_option END SEMI {$$=CreateAst("statement", 8, $1, $2, $3, $4, $5, $6, $7, $8);}
   | WHILE expression DO statement_list END SEMI {$$=CreateAst("statement", 6, $1, $2, $3, $4, $5, $6);}
   | LOOP statement_list END SEMI {$$=CreateAst("statement", 4, $1, $2, $3, $4);}

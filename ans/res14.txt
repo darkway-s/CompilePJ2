@@ -1,1 +1,1 @@
-(row: 3, col: 11):error: procedure error:, wrong format?
+(row: 7, col: 11):error: expected IS

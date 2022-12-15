@@ -1,1 +1,1 @@
-(row: 3, col: 25):error: var declaration error
+(row: 3, col: 25):error: unknown number
