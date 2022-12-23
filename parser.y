@@ -70,7 +70,7 @@ declaration: VAR var-decl_list{$$=CreateAst("declaration", 2, $1, $2);}
   | PROCEDURE procedure-decl_list{$$=CreateAst("declaration", 2, $1, $2);}
   ;
 var-decl_list: {$$=CreateAst("var-decl_list", 0, -1);}
-  | error {yyclearin; yyerror("unknown number", cols); yyerrok;} // error decl
+  | error {yyclearin; yyerror("var declaration error"); yyerrok;} // error decl
   | var-decl var-decl_list{$$=CreateAst("var-decl_list", 2, $1, $2);}
   ;
 type-decl_list: {$$=CreateAst("type-decl_list", 0, -1);}
@@ -90,7 +90,7 @@ COLON_type_option: {$$=CreateAst("COLON_type_option", 0, -1);}
 type-decl: ID IS type SEMI {$$=CreateAst("type-decl", 4, $1, $2, $3, $4);}
   ;
 procedure-decl: ID formal-params COLON_type_option IS body SEMI {$$=CreateAst("procedure-decl", 6, $1, $2, $3, $4, $5, $6);}
-  | ID formal-params COLON_type_option body SEMI{yyclearin;yyerror("expected IS", cols); yyerrok;}
+  | error {yyclearin;yyerror("procedure error: wrong format?"); yyerrok;}
   ;
 type: ID {$$=CreateAst("type", 1, $1);}
   | ARRAY OF type {$$=CreateAst("type", 3, $1, $2, $3);}
@@ -113,13 +113,13 @@ statement: lvalue ASSIGNOP expression SEMI {$$=CreateAst("statement", 4, $1, $2,
   | ID actual-params SEMI {$$=CreateAst("statement", 3, $1, $2, $3);}
   | READ Lbracket lvalue COMMA_lvalue_list Rbracket SEMI {$$=CreateAst("statement",6, $1, $2, $3, $4, $5, $6);}
   | WRITE write-params SEMI {$$=CreateAst("statement", 3, $1, $2, $3);}
-  | WRITE write-params {yyclearin; yyerror("expected semicolon", cols - 5); yyerrok;}
   | IF expression THEN statement_list ELSIF_statement_list_list ELSE_statement_list_option END SEMI {$$=CreateAst("statement", 8, $1, $2, $3, $4, $5, $6, $7, $8);}
   | WHILE expression DO statement_list END SEMI {$$=CreateAst("statement", 6, $1, $2, $3, $4, $5, $6);}
   | LOOP statement_list END SEMI {$$=CreateAst("statement", 4, $1, $2, $3, $4);}
   | FOR ID ASSIGNOP expression TO expression BY_expression_option DO statement_list END SEMI {$$=CreateAst("statement", 11, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);}
   | EXIT SEMI {$$=CreateAst("statement", 2, $1, $2);}
   | RETURN expression_option SEMI {$$=CreateAst("statement", 3, $1, $2, $3);}
+  | error WRITE{yyclearin; yyerror("statement error, wrong format or lack semicolon?"); yyerrok;}
   ;
 COMMA_lvalue_list: {$$=CreateAst("COMMA_lvalue_list", 0, -1);}
   | COMMA lvalue COMMA_lvalue_list {$$=CreateAst("COMMA_lvalue_list", 3, $1, $2, $3);}
@@ -177,8 +177,9 @@ COMMA_array-value_list: {$$=CreateAst("COMMA_expression_list", 0, -1);}
 array-value: expression {$$=CreateAst("array-value", 1, $1);}
   | expression OF expression {$$=CreateAst("array-value", 3, $1, $2, $3);}
   ;
-number: INTEGER {$$=CreateAst("number", 1, $1);}
+number: error {yyclearin; yyerror("number error: illegal number"); yyerrok;}
   | REAL {$$=CreateAst("number", 1, $1);}
+  | INTEGER {$$=CreateAst("number", 1, $1);}
   ;
 unary-op: ADD | MINUS | NOT {$$=CreateAst("unary-op", 1, $1);}
   ;

@@ -1,3 +1,4 @@
+      
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -243,7 +244,7 @@ struct Ast *CreateAst(char *name, int num, ...)
       a->flt = atof(yytext);
     }
     else
-    { // ID or TYPE
+    { // ID
       char *t;
       t = (char *)malloc(sizeof(char *) * 40);
       strcpy(t, yytext);
@@ -272,9 +273,6 @@ void PrintNode(struct Ast *a, int level)
         if (a->content)
           fprintf(fp, ": %s", a->content);
       }
-
-      // else
-      // fprintf(fp, "    (row: %d, col: %d)", a->line, a->cols);
       fprintf(fp, "\t\t @(%d:%d)", a->line, a->cols);
     }
     fprintf(fp, "\n");
@@ -295,6 +293,12 @@ void PrintAst(struct Ast *a, int level)
     PrintNode(a, level);
     cout << "Success!" << endl << endl;
   }
+  // if (flag == 1)
+  // {
+  //   cout << "Printing Error Tree>>>" << endl;
+  //   PrintNode(a, level);
+  //   cout << "End;" << endl << endl;
+  // }
 }
 
 void yyerror(char *s, int err_cols)
@@ -328,7 +332,7 @@ void yyerror(char *s)
     }
   }
   // 也做词法分析
-  fprintf(fp, "(row: %d):error: %s\n", yylineno, s); // 错误行,内容
+  fprintf(fp, "(row: %d) error: %s\n", yylineno, s); // 错误行,内容
 }
 
 
@@ -338,5 +342,13 @@ void deleteAst(struct Ast *a) // 回收内存~
   {
     deleteAst((*iter));
   }
+  if(!strcmp(a->name, "IDENTIFIER"))
+  {
+    free(a->content);
+    a->content = nullptr;
+  }
   delete a;
+  a = nullptr;
 }
+
+    
