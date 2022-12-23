@@ -1,1 +1,2 @@
-(row: 3, col: 25):error: unknown number
+(row: 3) error: number error: illegal number
+(row: 7) error: statement error, wrong format or lack semicolon?
